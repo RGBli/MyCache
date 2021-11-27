@@ -1,5 +1,5 @@
 # MyCache
-A simple LRU cache implemented in Golang.
+A LRU cache implemented in Golang.
 
 
 </br>
@@ -41,5 +41,8 @@ func main() {
 |thread-safe|no|yes|
 |maximum-capacity|no|yes|
 |scalable|no|yes|
+|TTL|no|yes|
+
+</br>
 
 One thing to notice. RWLock and map are applied to mycache, so mycache works not as fast as map in Golang, but the gap is not that clear. You can run benchmark_test.go to get more infomation about it.
