@@ -9,7 +9,7 @@ type myValue struct {
 	age uint64
 }
 
-func (v *myValue) Size() uint64 {
+func (v myValue) Size() uint64 {
 	return 1
 }
 

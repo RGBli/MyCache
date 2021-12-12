@@ -190,3 +190,9 @@ func (c *MyCache) Size() uint64 {
 	c.removeExpired()
 	return c.size
 }
+
+// Exist returns true if key exists in cache
+func (c *MyCache) Exist(key string) bool {
+	_, ok := c.cache[key]
+	return ok
+}
