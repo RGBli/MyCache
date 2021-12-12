@@ -192,7 +192,7 @@ func (c *MyCache) Size() uint64 {
 }
 
 // Exist returns true if key exists in cache
-func (c *MyCache) Exist(key string) bool {
+func (c *MyCache) Contains(key string) bool {
 	_, ok := c.cache[key]
 	return ok
 }
