@@ -8,7 +8,7 @@ A LRU cache implemented in Golang.
 ### Usage
 ```go
 import (
-    "github/RGBli/MyCache"
+    "github.com/RGBli/MyCache"
 )
 
 func main() {

@@ -14,6 +14,14 @@ func NewSet(strs []string) Set {
 	return set
 }
 
+func (set Set) Size() uint64 {
+	var size uint64 = 0
+	for k := range map[string]struct{}(set) {
+		size += uint64(len(k))
+	}
+	return size
+}
+
 func (set Set) Add(s string) {
 	set[s] = struct{}{}
 }
