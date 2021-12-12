@@ -37,7 +37,7 @@ func (set Set) Remove(s string) {
 
 func (set Set) GetAll() []string {
 	strs := make([]string, len(set))
-	for k, _ := range set {
+	for k := range set {
 		strs = append(strs, k)
 	}
 	return strs
@@ -49,8 +49,8 @@ func (set Set) Len() int {
 
 func (set1 Set) Intersect(set2 Set) Set {
 	set := Set(make(map[string]struct{}))
-	for k1, _ := range set1 {
-		for k2, _ := range set2 {
+	for k1 := range set1 {
+		for k2 := range set2 {
 			if k1 == k2 {
 				set[k1] = struct{}{}
 			}
@@ -61,10 +61,10 @@ func (set1 Set) Intersect(set2 Set) Set {
 
 func (set1 Set) Union(set2 Set) Set {
 	set := Set(make(map[string]struct{}))
-	for k1, _ := range set1 {
+	for k1 := range set1 {
 		set[k1] = struct{}{}
 	}
-	for k2, _ := range set2 {
+	for k2 := range set2 {
 		set[k2] = struct{}{}
 	}
 	return set
