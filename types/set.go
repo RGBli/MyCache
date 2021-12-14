@@ -36,7 +36,7 @@ func (set Set) Remove(s string) {
 }
 
 func (set Set) GetAll() []string {
-	strs := make([]string, len(set))
+	strs := make([]string, 0)
 	for k := range set {
 		strs = append(strs, k)
 	}

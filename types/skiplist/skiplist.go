@@ -11,52 +11,97 @@ const (
 	DefaultProbability float64 = 1 / math.E
 )
 
+type SkipList struct {
+	head        *Node
+	next        []*Node
+	maxLevel    int
+	length      int
+	randSource  rand.Source
+	probability float64
+	probTable   []float64
+}
+
+// NewWithMaxLevel creates a new skip list with MaxLevel set to the provided number.
+// maxLevel has to be int(math.Ceil(math.Log(N))) for DefaultProbability (where N is an upper bound on the
+// number of elements in a skip list). Returns a pointer to the new list.
+func NewWithMaxLevel(maxLevel int) *SkipList {
+	if maxLevel < 1 || maxLevel > 64 {
+		panic("maxLevel for a SkipList must be a positive integer <= 64")
+	}
+
+	return &SkipList{
+		head:        &Node{next: make([]*Node, maxLevel)},
+		next:        make([]*Node, maxLevel),
+		maxLevel:    maxLevel,
+		randSource:  rand.New(rand.NewSource(time.Now().UnixNano())),
+		probability: DefaultProbability,
+		probTable:   probabilityTable(DefaultProbability, maxLevel),
+	}
+}
+
+// New creates a new skip list with default parameters. Returns a pointer to the new list.
+func New() *SkipList {
+	return NewWithMaxLevel(DefaultMaxLevel)
+}
+
+func (list *SkipList) Len() int { 
+	return list.length
+}
+
+func (list *SkipList) Size() uint64 {
+	var size uint64 = uint64(32 + 8*(len(list.probTable)+len(list.next)))
+	node := list.Front()
+	for node != nil {
+		size += uint64(len(node.Value()) + len(node.next)*8 + 8)
+		node = node.Next()
+	}
+	return size
+}
+
 // Front returns the first node of the list
-func (list *SkipList) Front() *Element {
+func (list *SkipList) Front() *Node {
 	return list.next[0]
 }
 
 // Set inserts a value in the list with the specified key, ordered by the key
 // If the key exists, it updates the value in the existing node
 // Returns a pointer to the new element
-func (list *SkipList) Set(key float64, value interface{}) *Element {
-	var element *Element
+func (list *SkipList) Set(key float64, value string) *Node {
+	var node *Node
 	prevs := list.getPrevElementNodes(key)
 
 	// if key exists, only update the value
-	if element = prevs[0].next[0]; element != nil && element.key == key {
-		element.value = value
-		return element
+	if node = prevs[0].next[0]; node != nil && node.key == key {
+		node.value = value
+		return node
 	}
 
 	// if key doesn't exist, create a new node
-	element = &Element{
-		elementNode: elementNode{
-			next: make([]*Element, list.randLevel()),
-		},
+	node = &Node{
+		next:  make([]*Node, list.randLevel()),
 		key:   key,
 		value: value,
 	}
 
-	for i := range element.next {
-		element.next[i] = prevs[i].next[i]
-		prevs[i].next[i] = element
+	for i := range node.next {
+		node.next[i] = prevs[i].next[i]
+		prevs[i].next[i] = node
 	}
 
-	list.Length++
-	return element
+	list.length++
+	return node
 }
 
 // Get finds an element by key. It returns element pointer if found, nil if not found.
-func (list *SkipList) Get(key float64) *Element {
-	var node *elementNode = &list.elementNode
-	var next *Element
+func (list *SkipList) Get(key float64) *Node {
+	var node *Node = list.head
+	var next *Node
 
 	// retrieve from list.maxLevel - 1 to 0, to achieve O(logN) time complexity
 	for i := list.maxLevel - 1; i >= 0; i-- {
 		next = node.next[i]
-		for next != nil && key > next.key {
-			node = &next.elementNode
+		for next != nil && next.key < key {
+			node = next
 			next = next.next[i]
 		}
 	}
@@ -69,18 +114,17 @@ func (list *SkipList) Get(key float64) *Element {
 
 // Remove deletes an element with given key from the list.
 // Returns removed element pointer if found, nil if not found.
-func (list *SkipList) Remove(key float64) *Element {
+func (list *SkipList) Remove(key float64) *Node {
 	prevs := list.getPrevElementNodes(key)
 
-	// found the element and remove it
-	if element := prevs[0].next[0]; element != nil && element.key == key {
-		for i, v := range element.next {
+	// found the node and remove it
+	if node := prevs[0].next[0]; node != nil && node.key == key {
+		for i, v := range node.next {
 			prevs[i].next[i] = v
 		}
-		list.Length--
-		return element
+		list.length--
+		return node
 	}
-
 	return nil
 }
 
@@ -92,19 +136,20 @@ func (list *SkipList) Contains(key float64) bool {
 // getPrevElementNodes is the private search method that other functions use.
 // Finds the previous nodes on each level relative to the current Element and caches them in prevNodesCache.
 // Note that key doesn't have to exist.
-func (list *SkipList) getPrevElementNodes(key float64) []*elementNode {
-	var node *elementNode = &list.elementNode
-	var next *Element
+func (list *SkipList) getPrevElementNodes(key float64) ([]*Node) {
+	var node *Node = list.head
+	var next *Node
+	prevNodesCache := make([]*Node, list.maxLevel)
 
 	for i := list.maxLevel - 1; i >= 0; i-- {
 		next = node.next[i]
 		for next != nil && key > next.key {
-			node = &next.elementNode
+			node = next
 			next = next.next[i]
 		}
-		list.prevNodesCache[i] = node
+		prevNodesCache[i] = node
 	}
-	return list.prevNodesCache
+	return prevNodesCache
 }
 
 // SetProbability changes the current P value of the list.
@@ -135,27 +180,4 @@ func (list *SkipList) randLevel() (level int) {
 		level++
 	}
 	return
-}
-
-// NewWithMaxLevel creates a new skip list with MaxLevel set to the provided number.
-// maxLevel has to be int(math.Ceil(math.Log(N))) for DefaultProbability (where N is an upper bound on the
-// number of elements in a skip list). Returns a pointer to the new list.
-func NewWithMaxLevel(maxLevel int) *SkipList {
-	if maxLevel < 1 || maxLevel > 64 {
-		panic("maxLevel for a SkipList must be a positive integer <= 64")
-	}
-
-	return &SkipList{
-		elementNode:    elementNode{next: make([]*Element, maxLevel)},
-		prevNodesCache: make([]*elementNode, maxLevel),
-		maxLevel:       maxLevel,
-		randSource:     rand.New(rand.NewSource(time.Now().UnixNano())),
-		probability:    DefaultProbability,
-		probTable:      probabilityTable(DefaultProbability, maxLevel),
-	}
-}
-
-// New creates a new skip list with default parameters. Returns a pointer to the new list.
-func New() *SkipList {
-	return NewWithMaxLevel(DefaultMaxLevel)
 }

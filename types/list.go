@@ -20,8 +20,8 @@ func (l List) Size() uint64 {
 	return size
 }
 
-func (l List) Len() uint64 {
-	return uint64(len(l))
+func (l List) Len() int {
+	return len(l)
 }
 
 func (l List) Get(i int) (string, error) {

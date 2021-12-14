@@ -12,24 +12,15 @@ import (
 )
 
 func main() {
-    // define a type that can be cached
-    type myValue struct {
-    }
-    
-    // myValue implements Valuer interface so it can be cached
-    func (v *myValue) Size() uint64 {
-        return 1
-    }
-    
     // initialize a cache
     cache := MyCache.New(1 * 1024 * 1024)
     
     // put value in the cache
-    value := myValue{}
+    value := types.String("23")
     cache.Set("lbw", value)
     
     // get value from the cache
-    v, ok := cache.Get("key")
+    v, ok := cache.Get("lbw")
 }
 ```
 
@@ -42,6 +33,7 @@ func main() {
 |maximum-capacity|no|yes|
 |scalable|no|yes|
 |TTL|no|yes|
+|value types|implement by yourself|5 common implemented types|
 
 </br>
 
