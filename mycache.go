@@ -2,15 +2,10 @@ package mycache
 
 import (
 	"container/list"
+	"github.com/RGBli/MyCache/types"
 	"sync"
 	"time"
 )
-
-// Valuer is the interface that all the data types must implement to work with mycache.
-type Valuer interface {
-	Size() uint64
-	Len() int
-}
 
 // entry is the data stored in list.
 type entry struct {
@@ -38,24 +33,106 @@ func New(capacity uint64) *MyCache {
 	}
 }
 
-// Get returns the entry for given key.
-func (c *MyCache) Get(key string) (Valuer, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
+// get returns the entry for given key.
+func (c *MyCache) get(key string) (Valuer, bool) {
 	e := c.cache[key]
 	if e == nil {
 		return nil, false
 	}
 
 	// only get alive entry
-	if e.Value.(*entry).expireTime.IsZero() || e.Value.(*entry).expireTime.After(time.Now()) {
-		c.list.MoveToFront(e)
-		return e.Value.(*entry).value, true
+	if !e.Value.(*entry).expireTime.IsZero() && e.Value.(*entry).expireTime.Before(time.Now()) {
+		c.remove(key)
+		return nil, false
 	}
 
-	c.remove(key)
-	return nil, false
+	c.list.MoveToFront(e)
+	return e.Value.(*entry).value, true
+}
+
+func (c *MyCache) GetString(key string) (*types.String, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	v, ok := c.get(key)
+	if !ok {
+		return nil, false
+	}
+
+	s, ok := v.(*types.String)
+	if !ok {
+		return nil, false
+	}
+
+	return s, true
+}
+
+func (c *MyCache) GetList(key string) (*types.List, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	v, ok := c.get(key)
+	if !ok {
+		return nil, false
+	}
+
+	l, ok := v.(*types.List)
+	if !ok {
+		return nil, false
+	}
+
+	return l, true
+}
+
+func (c *MyCache) GetHash(key string) (*types.Hash, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	v, ok := c.get(key)
+	if !ok {
+		return nil, false
+	}
+
+	h, ok := v.(*types.Hash)
+	if !ok {
+		return nil, false
+	}
+
+	return h, true
+}
+
+func (c *MyCache) GetSet(key string) (*types.Set, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	v, ok := c.get(key)
+	if !ok {
+		return nil, false
+	}
+
+	set, ok := v.(*types.Set)
+	if !ok {
+		return nil, false
+	}
+
+	return set, true
+}
+
+func (c *MyCache) GetZset(key string) (*types.Zset, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	v, ok := c.get(key)
+	if !ok {
+		return nil, false
+	}
+
+	zset, ok := v.(*types.Zset)
+	if !ok {
+		return nil, false
+	}
+
+	return zset, true
 }
 
 // GetExpireTime returns the expire time and whether this entry exists in cache

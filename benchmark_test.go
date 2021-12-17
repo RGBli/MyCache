@@ -16,7 +16,7 @@ func BenchmarkLRUCacheGet(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		v, _ := c.Get("500")
+		v, _ := c.GetString("500")
 		if v == nil {
 			panic("error")
 		}

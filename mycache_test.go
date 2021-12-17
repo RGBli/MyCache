@@ -26,12 +26,12 @@ func TestGetSet(t *testing.T) {
 	value := types.NewString("23")
 	c := New(1 * 1024 * 1024)
 	c.Set(key, value)
-	v, ok := c.Get(key)
+	v, ok := c.GetString(key)
 	if !ok {
 		t.Errorf("ok should be true")
 	}
-	if v.(types.String).ToString() != "23" {
-		t.Errorf("get %s, expect 23", v.(types.String).ToString())
+	if v.ToString() != "23" {
+		t.Errorf("get %s, expect 23", v.ToString())
 	}
 }
 
@@ -52,7 +52,7 @@ func TestExpireTime(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 10)
-	if v, _ := c.Get(key); v != nil {
+	if v, _ := c.GetString(key); v != nil {
 		t.Errorf("%v = %v, expect nil", key, v)
 	}
 }
@@ -61,11 +61,21 @@ func TestList(t *testing.T) {
 	c := New(1 * 1024 * 1024)
 	key := "lbw"
 	list := types.NewList([]string{"foo", "bar"})
+	list.Add("test")
+	if list.Len() != 3 {
+		t.Errorf("list length is %d, expect 3", list.Len())
+	}
+
+	_ = list.Remove(2)
+	if list.Len() != 2 {
+		t.Errorf("list length is %d, expect 2", list.Len())
+	}
+
 	c.Set(key, list)
-	v, _ := c.Get(key)
-	s, _ := v.(types.List).Get(0)
-	if s != "foo" {
-		t.Errorf("got %s, expect foo", s)
+	v, _ := c.GetList(key)
+	s, _ := v.Get(1)
+	if s != "bar" {
+		t.Errorf("got %s, expect bar", s)
 	}
 }
 
@@ -76,8 +86,8 @@ func TestHash(t *testing.T) {
 	hash.Put("age", "23")
 	hash.Put("gender", "male")
 	c.Set(key, hash)
-	v, _ := c.Get(key)
-	s, _ := v.(types.Hash).Get("age")
+	v, _ := c.GetHash(key)
+	s, _ := v.Get("age")
 	if s != "23" {
 		t.Errorf("got %s, expect 23", s)
 	}
@@ -88,13 +98,13 @@ func TestSet(t *testing.T) {
 	key := "lbw"
 	set := types.NewSet([]string{"foo", "foo", "bar"})
 	c.Set(key, set)
-	v, _ := c.Get(key)
-	len := v.(types.Set).Len()
+	v, _ := c.GetSet(key)
+	len := v.Len()
 	if len != 2 {
 		t.Errorf("got %d, expect 2", len)
 	}
 
-	strs := v.(types.Set).GetAll()
+	strs := v.GetAll()
 	for _, str := range strs {
 		fmt.Println(str)
 	}
@@ -113,8 +123,8 @@ func TestZset(t *testing.T) {
 	if zset.Len() != 2 {
 		t.Errorf("got %d, expect 2", zset.Len())
 	}
-	v, _ := c.Get(key)
-	strs := v.(*types.Zset).GetRange(0, 2, 1)
+	v, _ := c.GetZset(key)
+	strs := v.GetRange(0, 2, 1)
 	if strs[1] != "23" {
 		t.Errorf("got %s, expect 23", strs[1])
 	}

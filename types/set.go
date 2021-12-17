@@ -1,71 +1,73 @@
 package types
 
-type Set map[string]struct{}
-
-func NewEmptySet() Set {
-	return Set(make(map[string]struct{}))
+type Set struct {
+	s map[string]struct{}
 }
 
-func NewSet(strs []string) Set {
-	set := Set(make(map[string]struct{}))
+func NewEmptySet() *Set {
+	return &Set{s: make(map[string]struct{})}
+}
+
+func NewSet(strs []string) *Set {
+	set := &Set{s: make(map[string]struct{})}
 	for _, str := range strs {
 		set.Add(str)
 	}
 	return set
 }
 
-func (set Set) Size() uint64 {
+func (set *Set) Size() uint64 {
 	var size uint64 = 0
-	for k := range map[string]struct{}(set) {
+	for k := range set.s {
 		size += uint64(len(k))
 	}
 	return size
 }
 
-func (set Set) Add(s string) {
-	set[s] = struct{}{}
+func (set *Set) Add(s string) {
+	set.s[s] = struct{}{}
 }
 
-func (set Set) Contains(s string) bool {
-	_, ok := set[s]
+func (set *Set) Contains(s string) bool {
+	_, ok := set.s[s]
 	return ok
 }
 
-func (set Set) Remove(s string) {
-	delete(set, s)
+func (set *Set) Remove(s string) {
+	delete(set.s, s)
 }
 
-func (set Set) GetAll() []string {
+func (set *Set) GetAll() []string {
 	strs := make([]string, 0)
-	for k := range set {
+	for k := range set.s {
 		strs = append(strs, k)
 	}
 	return strs
 }
 
-func (set Set) Len() int {
-	return len(set)
+func (set *Set) Len() int {
+	return len(set.s)
 }
 
-func (set1 Set) Intersect(set2 Set) Set {
-	set := Set(make(map[string]struct{}))
-	for k1 := range set1 {
-		for k2 := range set2 {
+func (set *Set) Intersect(s Set) *Set {
+	res := &Set{s: make(map[string]struct{})}
+	for k1 := range set.s {
+		for k2 := range s.s {
 			if k1 == k2 {
-				set[k1] = struct{}{}
+				res.s[k1] = struct{}{}
 			}
 		}
 	}
-	return set
+	return res
 }
 
-func (set1 Set) Union(set2 Set) Set {
-	set := Set(make(map[string]struct{}))
-	for k1 := range set1 {
-		set[k1] = struct{}{}
+func (set *Set) Union(s Set) *Set {
+	res := &Set{s: make(map[string]struct{})}
+	for k1 := range set.s {
+		res.s[k1] = struct{}{}
 	}
-	for k2 := range set2 {
-		set[k2] = struct{}{}
+	for k2 := range s.s {
+		res.s[k2] = struct{}{}
 	}
-	return set
+	return res
 }

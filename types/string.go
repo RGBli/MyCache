@@ -1,19 +1,21 @@
 package types
 
-type String string
-
-func NewString(s string) String {
-	return String(s)
+type String struct {
+	s string
 }
 
-func (s String) Size() uint64 {
-	return uint64(len(s))
+func NewString(s string) *String {
+	return &String{s: s}
 }
 
-func (s String) ToString() string {
-	return string(s)
+func (s *String) Size() uint64 {
+	return uint64(len(s.s))
 }
 
-func (s String) Len() int {
-	return len(s)
+func (s *String) ToString() string {
+	return s.s
+}
+
+func (s *String) Len() int {
+	return len(s.s)
 }
