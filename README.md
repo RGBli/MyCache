@@ -8,19 +8,23 @@ A LRU cache implemented in Golang.
 ### Usage
 ```go
 import (
+    "fmt"
     "github.com/RGBli/MyCache"
+    "github.com/RGBli/MyCache/types"
 )
 
 func main() {
-    // initialize a cache
+    // initialize a cache instance
     cache := MyCache.New(1 * 1024 * 1024)
     
-    // put value in the cache
-    value := types.String("23")
-    cache.Set("lbw", value)
+    // put value in cache
+    key := "lbw"
+    value := types.NewString("23")
+    cache.Set(key, value)
     
-    // get value from the cache
-    v, ok := cache.Get("lbw")
+    // get value from cache
+    v, ok := cache.GetString(key)
+    fmt.Println(v, ok)
 }
 ```
 
