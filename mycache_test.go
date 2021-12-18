@@ -1,11 +1,8 @@
 package mycache
 
 import (
-	"fmt"
 	"testing"
 	"time"
-
-	"github.com/RGBli/MyCache/types"
 )
 
 func TestInitialState(t *testing.T) {
@@ -23,10 +20,12 @@ func TestInitialState(t *testing.T) {
 
 func TestGetSet(t *testing.T) {
 	key := "lbw"
-	value := types.NewString("23")
+	value := NewString("23")
+	dbName := "test"
 	c := New(1 * 1024 * 1024)
-	c.Set(key, value)
-	v, ok := c.GetString(key)
+	db := c.Use(dbName)
+	db.Set(key, value)
+	v, ok := db.GetString(key)
 	if !ok {
 		t.Errorf("ok should be true")
 	}
@@ -37,12 +36,14 @@ func TestGetSet(t *testing.T) {
 
 func TestExpireTime(t *testing.T) {
 	key := "lbw"
-	value := types.NewString("23")
+	value := NewString("23")
+	dbName := "test"
 	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
 
 	start := time.Now()
-	c.SetValueAndExpireTime(key, value, start.Add(time.Second*10))
-	expireTime, ok := c.GetExpireTime(key)
+	db.SetValueAndExpireTime(key, value, start.Add(time.Second*10))
+	expireTime, ok := db.GetExpireTime(key)
 	if expireTime.Before(start.Add(time.Second*9)) || expireTime.After(start.Add(time.Second*11)) {
 		t.Errorf("get %v, expect %v", expireTime, start.Add(time.Second*55))
 	}
@@ -52,15 +53,36 @@ func TestExpireTime(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 10)
-	if v, _ := c.GetString(key); v != nil {
+	if v, _ := db.GetString(key); v != nil {
 		t.Errorf("%v = %v, expect nil", key, v)
 	}
 }
 
-func TestList(t *testing.T) {
+func TestDatabase(t *testing.T) {
 	c := New(1 * 1024 * 1024)
+	dbName1 := "test1"
+	db1 := c.Use(dbName1)
+	db1.Set("lbw", NewString("23"))
+	v1, _ := db1.GetString("lbw")
+	if v1.ToString() != "23" {
+		t.Errorf("got %s, expect 23", v1.ToString())
+	}
+
+	dbName2 := "test2"
+	db2 := c.Use(dbName2)
+	db2.Set("lbw", NewString("3"))
+	v2, _ := db2.GetString("lbw")
+	if v2.ToString() != "3" {
+		t.Errorf("got %s, expect 3", v1.ToString())
+	}
+}
+
+func TestList(t *testing.T) {
+	dbName := "test"
+	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
 	key := "lbw"
-	list := types.NewList([]string{"foo", "bar"})
+	list := NewList([]string{"foo", "bar"})
 	list.Add("test")
 	if list.Len() != 3 {
 		t.Errorf("list length is %d, expect 3", list.Len())
@@ -71,8 +93,8 @@ func TestList(t *testing.T) {
 		t.Errorf("list length is %d, expect 2", list.Len())
 	}
 
-	c.Set(key, list)
-	v, _ := c.GetList(key)
+	db.Set(key, list)
+	v, _ := db.GetList(key)
 	s, _ := v.Get(1)
 	if s != "bar" {
 		t.Errorf("got %s, expect bar", s)
@@ -80,13 +102,15 @@ func TestList(t *testing.T) {
 }
 
 func TestHash(t *testing.T) {
+	dbName := "test"
 	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
 	key := "lbw"
-	hash := types.NewHash()
+	hash := NewHash()
 	hash.Put("age", "23")
 	hash.Put("gender", "male")
-	c.Set(key, hash)
-	v, _ := c.GetHash(key)
+	db.Set(key, hash)
+	v, _ := db.GetHash(key)
 	s, _ := v.Get("age")
 	if s != "23" {
 		t.Errorf("got %s, expect 23", s)
@@ -94,36 +118,37 @@ func TestHash(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
+	dbName := "test"
 	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
 	key := "lbw"
-	set := types.NewSet([]string{"foo", "foo", "bar"})
-	c.Set(key, set)
-	v, _ := c.GetSet(key)
+	set := NewSet([]string{"foo", "foo", "bar"})
+	db.Set(key, set)
+	v, _ := db.GetSet(key)
 	len := v.Len()
 	if len != 2 {
 		t.Errorf("got %d, expect 2", len)
 	}
 
 	strs := v.GetAll()
-	for _, str := range strs {
-		fmt.Println(str)
-	}
 	if strs[1] != "bar" {
 		t.Errorf("got %s, expect bar", strs[1])
 	}
 }
 
 func TestZset(t *testing.T) {
+	dbName := "test"
 	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
 	key := "lbw"
-	zset := types.NewZset()
+	zset := NewZset()
 	zset.Add(1.0, "23")
 	zset.Add(0.0, "25")
-	c.Set(key, zset)
+	db.Set(key, zset)
 	if zset.Len() != 2 {
 		t.Errorf("got %d, expect 2", zset.Len())
 	}
-	v, _ := c.GetZset(key)
+	v, _ := db.GetZset(key)
 	strs := v.GetRange(0, 2, 1)
 	if strs[1] != "23" {
 		t.Errorf("got %s, expect 23", strs[1])

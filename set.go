@@ -1,4 +1,4 @@
-package types
+package mycache
 
 type Set struct {
 	s map[string]struct{}

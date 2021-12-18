@@ -1,6 +1,8 @@
-package types
+package mycache
 
-import "github.com/RGBli/MyCache/types/skiplist"
+import (
+	"github.com/RGBli/MyCache/skiplist"
+)
 
 type Zset struct {
 	list *skiplist.SkipList
@@ -28,7 +30,7 @@ func (z *Zset) Get(score float64) (string, bool) {
 
 func (z *Zset) GetRange(start, end, step float64) []string {
 	strs := make([]string, 0)
-	for i := start; i < end; i+=step {
+	for i := start; i < end; i += step {
 		value := z.list.Get(i)
 		if value != nil {
 			strs = append(strs, value.Value())

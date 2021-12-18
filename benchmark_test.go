@@ -3,20 +3,20 @@ package mycache
 import (
 	"strconv"
 	"testing"
-
-	"github.com/RGBli/MyCache/types"
 )
 
 func BenchmarkLRUCacheGet(b *testing.B) {
-	c := New(64 * 1024 * 1024)
-	value := types.NewString("23")
+	dbName := "test"
+	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
+	value := NewString("23")
 	for i := 0; i < 1000; i++ {
-		c.Set(strconv.Itoa(i), value)
+		db.Set(strconv.Itoa(i), value)
 	}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		v, _ := c.GetString("500")
+		v, _ := db.GetString("500")
 		if v == nil {
 			panic("error")
 		}
@@ -25,11 +25,13 @@ func BenchmarkLRUCacheGet(b *testing.B) {
 }
 
 func BenchmarkLRUCacheSet(b *testing.B) {
-	c := New(64 * 1024 * 1024)
-	value := types.NewString("23")
+	dbName := "test"
+	c := New(1 * 1024 * 1024)
+	db := c.Use(dbName)
+	value := NewString("23")
 
 	for i := 0; i < b.N; i++ {
-		c.Set(strconv.Itoa(i), value)
+		db.Set(strconv.Itoa(i), value)
 	}
 }
 

@@ -1,4 +1,4 @@
-package types
+package mycache
 
 type Hash struct {
 	h map[string]string

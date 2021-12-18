@@ -44,7 +44,7 @@ func New() *SkipList {
 	return NewWithMaxLevel(DefaultMaxLevel)
 }
 
-func (list *SkipList) Len() int { 
+func (list *SkipList) Len() int {
 	return list.length
 }
 
@@ -136,7 +136,7 @@ func (list *SkipList) Contains(key float64) bool {
 // getPrevElementNodes is the private search method that other functions use.
 // Finds the previous nodes on each level relative to the current Element and caches them in prevNodesCache.
 // Note that key doesn't have to exist.
-func (list *SkipList) getPrevElementNodes(key float64) ([]*Node) {
+func (list *SkipList) getPrevElementNodes(key float64) []*Node {
 	var node *Node = list.head
 	var next *Node
 	prevNodesCache := make([]*Node, list.maxLevel)
