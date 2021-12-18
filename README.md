@@ -10,7 +10,6 @@ A thread-safe LRU cache implemented in Golang.
 import (
     "fmt"
     "github.com/RGBli/MyCache"
-    "github.com/RGBli/MyCache/skiplist"
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
     
     // put value in cache
     key := "lbw"
-    value := types.NewString("23")
+    value := NewString("23")
     db.Set(key, value)
     
     // get value from cache
