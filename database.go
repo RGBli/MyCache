@@ -32,6 +32,7 @@ func (db *database) get(key string) (Valuer, bool) {
 	return e.Value.(*entry).value, true
 }
 
+// GetString get value from string
 func (db *database) GetString(key string) (*String, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -49,6 +50,7 @@ func (db *database) GetString(key string) (*String, bool) {
 	return s, true
 }
 
+// GetList get value from list
 func (db *database) GetList(key string) (*List, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -66,6 +68,7 @@ func (db *database) GetList(key string) (*List, bool) {
 	return l, true
 }
 
+// GetHash get value from hash
 func (db *database) GetHash(key string) (*Hash, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -83,6 +86,7 @@ func (db *database) GetHash(key string) (*Hash, bool) {
 	return h, true
 }
 
+// GetSet get value from set
 func (db *database) GetSet(key string) (*Set, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -100,6 +104,7 @@ func (db *database) GetSet(key string) (*Set, bool) {
 	return set, true
 }
 
+// GetZset get value from zset
 func (db *database) GetZset(key string) (*Zset, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()

@@ -19,6 +19,7 @@ func New(capacity uint64) *MyCache {
 	}
 }
 
+// Use select or create a database
 func (c *MyCache) Use(name string) *database {
 	if db, ok := c.databases[name]; ok {
 		return db
