@@ -22,6 +22,10 @@ type entry struct {
 	expireTime time.Time
 }
 
+func isExpire(e *list.Element) bool {
+	return !e.Value.(*entry).expireTime.IsZero() && e.Value.(*entry).expireTime.Before(time.Now())
+}
+
 // get returns the entry for given key.
 func (db *database) get(key string) (Valuer, bool) {
 	e := db.cache[key]
@@ -30,7 +34,7 @@ func (db *database) get(key string) (Valuer, bool) {
 	}
 
 	// only get alive entry
-	if !e.Value.(*entry).expireTime.IsZero() && e.Value.(*entry).expireTime.Before(time.Now()) {
+	if isExpire(e) {
 		db.remove(key)
 		return nil, false
 	}
@@ -142,8 +146,8 @@ func (db *database) GetExpireTime(key string) (time.Time, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	e := db.cache[key]
-	if e == nil {
+	e, ok := db.cache[key]
+	if !ok || isExpire(e) {
 		return time.Unix(0, 0), false
 	}
 
@@ -156,11 +160,14 @@ func (db *database) SetValue(key string, value Valuer) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if e, ok := db.cache[key]; ok {
+	if e, ok := db.cache[key]; ok && !isExpire(e) {
 		db.list.MoveToFront(e)
 		e.Value.(*entry).value = value
 		db.size += value.Size() - e.Value.(*entry).value.Size()
 	} else {
+		if ok && isExpire(e) {
+			db.remove(key)
+		}
 		e := &entry{
 			key:   key,
 			value: value,
@@ -168,6 +175,7 @@ func (db *database) SetValue(key string, value Valuer) {
 		element := db.list.PushFront(e)
 		db.cache[key] = element
 		db.size += value.Size()
+
 	}
 
 	for db.size > db.mycache.capacity {
@@ -184,8 +192,12 @@ func (db *database) SetExpireTime(key string, expireTime time.Time) {
 	defer db.mu.Unlock()
 
 	if e, ok := db.cache[key]; ok {
-		db.list.MoveToFront(e)
-		e.Value.(*entry).expireTime = expireTime
+		if !isExpire(e) {
+			db.list.MoveToFront(e)
+			e.Value.(*entry).expireTime = expireTime
+		} else {
+			db.remove(key)
+		}
 	}
 }
 
@@ -194,12 +206,15 @@ func (db *database) SetValueAndExpireTime(key string, value Valuer, expireTime t
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if e, ok := db.cache[key]; ok {
+	if e, ok := db.cache[key]; ok && !isExpire(e) {
 		db.list.MoveToFront(e)
 		e.Value.(*entry).value = value
 		e.Value.(*entry).expireTime = expireTime
 		db.size += value.Size() - e.Value.(*entry).value.Size()
 	} else {
+		if ok && isExpire(e) {
+			db.remove(key)
+		}
 		e := &entry{
 			key:        key,
 			value:      value,
@@ -243,7 +258,7 @@ func (db *database) RemoveExpired() {
 	defer db.mu.Unlock()
 
 	for key, e := range db.cache {
-		if !e.Value.(*entry).expireTime.IsZero() && e.Value.(*entry).expireTime.Before(time.Now()) {
+		if isExpire(e) {
 			db.remove(key)
 		}
 	}
@@ -261,8 +276,11 @@ func (db *database) Flush() {
 
 // Exist returns true if key exists in cache
 func (db *database) Contains(key string) bool {
-	_, ok := db.cache[key]
-	return ok
+	e, ok := db.cache[key]
+	if ok {
+		return isExpire(e)
+	}
+	return false
 }
 
 // getSize returns current size of database

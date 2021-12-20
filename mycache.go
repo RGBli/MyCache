@@ -3,33 +3,43 @@ package mycache
 import (
 	"container/list"
 	"sync"
+	"time"
+)
+
+const (
+	DefaultPersistPath   = "log"
+	DefaultCleanInterval = time.Minute
+	DefaultCapacity      = 10 * 1024 * 1024
 )
 
 type MyCache struct {
-	mu          sync.RWMutex
-	databases   map[string]*database
-	capacity    uint64
-	size        uint64
-	persistPath string
+	mu            sync.RWMutex
+	databases     map[string]*database
+	capacity      uint64
+	size          uint64
+	cleanInterval time.Duration
+	persistPath   string
 }
 
 // New returns an initialized MyCache
-func New(capacity uint64, persistPath string) *MyCache {
+func New(capacity uint64, cleanInterval time.Duration, persistPath string) *MyCache {
 	return &MyCache{
-		databases:   make(map[string]*database),
-		capacity:    capacity,
-		size:        0,
-		persistPath: persistPath,
+		databases:     make(map[string]*database),
+		capacity:      capacity,
+		size:          0,
+		cleanInterval: cleanInterval,
+		persistPath:   persistPath,
 	}
 }
 
 // Default returns a mycache instance initialized with default parameters
 func Default() *MyCache {
 	return &MyCache{
-		databases:   make(map[string]*database),
-		capacity:    1 * 1024 * 1024,
-		size:        0,
-		persistPath: "log",
+		databases:     make(map[string]*database),
+		capacity:      DefaultCapacity,
+		size:          0,
+		cleanInterval: DefaultCleanInterval,
+		persistPath:   DefaultPersistPath,
 	}
 }
 
@@ -47,6 +57,15 @@ func (c *MyCache) Use(name string) *database {
 			list:    list.New(),
 		}
 		c.databases[name] = db
+	}
+
+	if c.cleanInterval > 0 {
+		go func() {
+			for {
+				time.Sleep(c.cleanInterval)
+				db.RemoveExpired()
+			}
+		}()
 	}
 	return db
 }
