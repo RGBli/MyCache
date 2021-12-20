@@ -7,11 +7,11 @@ import (
 
 func BenchmarkLRUCacheGet(b *testing.B) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	value := NewString("23")
 	for i := 0; i < 1000; i++ {
-		db.Set(strconv.Itoa(i), value)
+		db.SetValue(strconv.Itoa(i), value)
 	}
 
 	b.StartTimer()
@@ -26,12 +26,12 @@ func BenchmarkLRUCacheGet(b *testing.B) {
 
 func BenchmarkLRUCacheSet(b *testing.B) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	value := NewString("23")
 
 	for i := 0; i < b.N; i++ {
-		db.Set(strconv.Itoa(i), value)
+		db.SetValue(strconv.Itoa(i), value)
 	}
 }
 

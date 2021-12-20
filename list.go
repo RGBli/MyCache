@@ -30,6 +30,10 @@ func (l *List) Len() int {
 	return len(l.slice)
 }
 
+func (l *List) Type() string {
+	return "List"
+}
+
 func (l *List) Get(i int) (string, error) {
 	if i >= len(l.slice) {
 		err := errors.New("index out of bounds")

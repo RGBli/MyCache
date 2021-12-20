@@ -9,7 +9,7 @@ func TestInitialState(t *testing.T) {
 	var capacity uint64 = 1 * 1024 * 1024
 	var size uint64 = 0
 
-	c := New(capacity)
+	c := Default()
 	if c.Capacity() != capacity {
 		t.Errorf("capacity = %v, expect %v", c.Capacity(), capacity)
 	}
@@ -22,9 +22,9 @@ func TestGetSet(t *testing.T) {
 	key := "lbw"
 	value := NewString("23")
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
-	db.Set(key, value)
+	db.SetValue(key, value)
 	v, ok := db.GetString(key)
 	if !ok {
 		t.Errorf("ok should be true")
@@ -38,7 +38,7 @@ func TestExpireTime(t *testing.T) {
 	key := "lbw"
 	value := NewString("23")
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 
 	start := time.Now()
@@ -59,10 +59,10 @@ func TestExpireTime(t *testing.T) {
 }
 
 func TestDatabase(t *testing.T) {
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	dbName1 := "test1"
 	db1 := c.Use(dbName1)
-	db1.Set("lbw", NewString("23"))
+	db1.SetValue("lbw", NewString("23"))
 	v1, _ := db1.GetString("lbw")
 	if v1.ToString() != "23" {
 		t.Errorf("got %s, expect 23", v1.ToString())
@@ -70,16 +70,29 @@ func TestDatabase(t *testing.T) {
 
 	dbName2 := "test2"
 	db2 := c.Use(dbName2)
-	db2.Set("lbw", NewString("3"))
+	db2.SetValue("lbw", NewString("3"))
 	v2, _ := db2.GetString("lbw")
 	if v2.ToString() != "3" {
 		t.Errorf("got %s, expect 3", v1.ToString())
 	}
 }
 
+func TestType(t *testing.T) {
+	key := "lbw"
+	value := NewString("23")
+	dbName := "test"
+	c := Default()
+	db := c.Use(dbName)
+	db.SetValue(key, value)
+	v, _ := db.Get(key)
+	if v.Type() != "String" {
+		t.Errorf("got %s, expect String", v.Type())
+	}
+}
+
 func TestList(t *testing.T) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	key := "lbw"
 	list := NewList([]string{"foo", "bar"})
@@ -93,7 +106,7 @@ func TestList(t *testing.T) {
 		t.Errorf("list length is %d, expect 2", list.Len())
 	}
 
-	db.Set(key, list)
+	db.SetValue(key, list)
 	v, _ := db.GetList(key)
 	s, _ := v.Get(1)
 	if s != "bar" {
@@ -103,13 +116,13 @@ func TestList(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	key := "lbw"
 	hash := NewHash()
 	hash.Put("age", "23")
 	hash.Put("gender", "male")
-	db.Set(key, hash)
+	db.SetValue(key, hash)
 	v, _ := db.GetHash(key)
 	s, _ := v.Get("age")
 	if s != "23" {
@@ -119,11 +132,11 @@ func TestHash(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	key := "lbw"
 	set := NewSet([]string{"foo", "foo", "bar"})
-	db.Set(key, set)
+	db.SetValue(key, set)
 	v, _ := db.GetSet(key)
 	len := v.Len()
 	if len != 2 {
@@ -138,13 +151,13 @@ func TestSet(t *testing.T) {
 
 func TestZset(t *testing.T) {
 	dbName := "test"
-	c := New(1 * 1024 * 1024)
+	c := Default()
 	db := c.Use(dbName)
 	key := "lbw"
 	zset := NewZset()
 	zset.Add(1.0, "23")
 	zset.Add(0.0, "25")
-	db.Set(key, zset)
+	db.SetValue(key, zset)
 	if zset.Len() != 2 {
 		t.Errorf("got %d, expect 2", zset.Len())
 	}

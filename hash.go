@@ -16,6 +16,14 @@ func (h *Hash) Size() uint64 {
 	return size
 }
 
+func (h *Hash) Len() int {
+	return len(h.h)
+}
+
+func (h *Hash) Type() string {
+	return "Hash"
+}
+
 func (h *Hash) Put(key string, value string) {
 	h.h[key] = value
 }
@@ -27,8 +35,4 @@ func (h *Hash) Get(key string) (value string, ok bool) {
 
 func (h *Hash) Remove(key string) {
 	delete(h.h, key)
-}
-
-func (h *Hash) Len() int {
-	return len(h.h)
 }

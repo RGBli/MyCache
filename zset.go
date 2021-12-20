@@ -16,6 +16,14 @@ func (z *Zset) Size() uint64 {
 	return z.list.Size()
 }
 
+func (z *Zset) Len() int {
+	return z.list.Len()
+}
+
+func (z *Zset) Type() string {
+	return "Zset"
+}
+
 func (z *Zset) Add(score float64, value string) {
 	z.list.Set(score, value)
 }
@@ -41,8 +49,4 @@ func (z *Zset) GetRange(start, end, step float64) []string {
 
 func (z *Zset) Remove(score float64) {
 	z.list.Remove(score)
-}
-
-func (z *Zset) Len() int {
-	return z.list.Len()
 }

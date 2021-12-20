@@ -15,6 +15,13 @@ type database struct {
 	list    *list.List
 }
 
+// entry is the data stored in list.
+type entry struct {
+	key        string
+	value      Valuer
+	expireTime time.Time
+}
+
 // get returns the entry for given key.
 func (db *database) get(key string) (Valuer, bool) {
 	e := db.cache[key]
@@ -30,6 +37,14 @@ func (db *database) get(key string) (Valuer, bool) {
 
 	db.list.MoveToFront(e)
 	return e.Value.(*entry).value, true
+}
+
+// Get get valuer from database
+func (db *database) Get(key string) (Valuer, bool) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	return db.get(key)
 }
 
 // GetString get value from string
@@ -136,8 +151,8 @@ func (db *database) GetExpireTime(key string) (time.Time, bool) {
 	return e.Value.(*entry).expireTime, true
 }
 
-// Set stores entry for given key.
-func (db *database) Set(key string, value Valuer) {
+// SetValue stores entry for given key.
+func (db *database) SetValue(key string, value Valuer) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -207,6 +222,7 @@ func (db *database) SetValueAndExpireTime(key string, value Valuer, expireTime t
 func (db *database) Remove(key string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
+
 	db.remove(key)
 }
 
@@ -221,8 +237,11 @@ func (db *database) remove(key string) {
 	db.size -= e.Value.(*entry).value.Size()
 }
 
-// removeExpired deletes all the expired entries
-func (db *database) removeExpired() {
+// RemoveExpired deletes all the expired entries
+func (db *database) RemoveExpired() {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	for key, e := range db.cache {
 		if !e.Value.(*entry).expireTime.IsZero() && e.Value.(*entry).expireTime.Before(time.Now()) {
 			db.remove(key)
@@ -231,7 +250,7 @@ func (db *database) removeExpired() {
 }
 
 // Flush deletes all the entries
-func (db *database) Flush(name string) {
+func (db *database) Flush() {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -246,10 +265,8 @@ func (db *database) Contains(key string) bool {
 	return ok
 }
 
+// getSize returns current size of database
 func (db *database) getSize() uint64 {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	db.removeExpired()
+	db.RemoveExpired()
 	return db.size
 }

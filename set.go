@@ -24,6 +24,14 @@ func (set *Set) Size() uint64 {
 	return size
 }
 
+func (set *Set) Len() int {
+	return len(set.s)
+}
+
+func (set *Set) Type() string {
+	return "Set"
+}
+
 func (set *Set) Add(s string) {
 	set.s[s] = struct{}{}
 }
@@ -43,10 +51,6 @@ func (set *Set) GetAll() []string {
 		strs = append(strs, k)
 	}
 	return strs
-}
-
-func (set *Set) Len() int {
-	return len(set.s)
 }
 
 func (set *Set) Intersect(s Set) *Set {
